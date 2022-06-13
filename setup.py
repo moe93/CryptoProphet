@@ -76,7 +76,7 @@ setup(
                 'matplotlib==3.3.3',
                 'numpy==1.22.4',
                 'pandas==1.4.2',
-                'pandas-ta==0.3.14b',
+                'pandas-ta==0.3.14b0',
                 'python-telegram-bot==13.7',
                 'statsmodels==0.13.2'
                 ],

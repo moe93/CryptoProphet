@@ -43,7 +43,7 @@ pandas==1.4.2
     #   cryptoprophet (setup.py)
     #   pandas-ta
     #   statsmodels
-pandas-ta==0.3.14b
+pandas-ta==0.3.14b0
     # via cryptoprophet (setup.py)
 patsy==0.5.2
     # via statsmodels
