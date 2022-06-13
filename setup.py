@@ -11,6 +11,7 @@ DOCLINES = (__doc__ or '').split("\n")
 
 from setuptools import setup, find_packages
 import pathlib
+import sys
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
@@ -71,12 +72,12 @@ setup(
         include_package_data=True,
         python_requires=">=3.7, <4",
         install_requires=[
-                'coinbasepro==0.3.1'
+                'coinbasepro==0.3.1',
                 'matplotlib==3.3.3',
                 'numpy==1.22.4',
                 'pandas==1.4.2',
                 'pandas-ta==0.3.14b',
                 'python-telegram-bot==13.7',
-                'statsmodel==0.13.2'
+                'statsmodels==0.13.2'
                 ],
         )
