@@ -2,7 +2,7 @@
 
 CryptoProphet is a python crypto trading bot with forecasting abilities to determine buy and sell orders.
 
-WIP
+**WIP:**  &emsp; 0% **||** -- 1% ------> &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; **||** 100%
 
 ## Getting started
 
