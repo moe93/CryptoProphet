@@ -75,6 +75,7 @@ setup(
                 'coinbasepro==0.3.1',
                 'matplotlib==3.3.3',
                 'numpy==1.22.4',
+                'orjson==3.7.2',
                 'pandas==1.4.2',
                 'pandas-ta==0.3.14b0',
                 'python-telegram-bot==13.7',
