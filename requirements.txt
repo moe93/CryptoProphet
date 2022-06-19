@@ -6,13 +6,13 @@
 #
 apscheduler==3.6.3
     # via python-telegram-bot
-backports-zoneinfo==0.2.1
+backports.zoneinfo==0.2.1
     # via
     #   pytz-deprecation-shim
     #   tzlocal
 cachetools==4.2.2
     # via python-telegram-bot
-certifi==2022.5.18.1
+certifi==2022.6.15
     # via
     #   python-telegram-bot
     #   requests
@@ -59,7 +59,9 @@ python-dateutil==2.8.2
     # via
     #   matplotlib
     #   pandas
-python-telegram-bot==13.7
+python-dotenv==0.20.0
+    # via cryptoprophet (setup.py)
+python-telegram-bot==13.12
     # via cryptoprophet (setup.py)
 pytz==2022.1
     # via

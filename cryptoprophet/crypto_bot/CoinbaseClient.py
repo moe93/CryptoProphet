@@ -12,11 +12,10 @@ KNOWN ISSUES:
 AUTHOR                      :   Mohammad Odeh
 DATE                        :   Jun. 13th, 2022 Year of Our Lord
 LAST CONTRIBUTION DATE      :   Jun. 14th, 2022 Year of Our Lord
-
 """
-import os
 
 import  coinbasepro                 as      cbp                         # Official API for Coinbase Pro
+import  pandas                      as      pd                          # Dataframes to facilitate analysis
 from    re                          import  compile                     # Use regex for validation
 from    os                          import  getcwd                      # Get current working directory
 from    os.path                     import  join                        # Create path that is agnostic to OS
@@ -30,9 +29,11 @@ class CoinbaseProClient( object ):
         self._passphrase    = None                                      # Initiate internal API passphrase
         self.validate_api_login( _key, _secret, _passphrase )           # Validate API entries
 
-        self.exchange_client = None                                     # Initiate exchange client
+        self.client = None                                     # Initiate exchange client
         self.start_client()                                             # Start client
-    
+
+        self.dataframe = None
+        
     def validate_api_login( self, _key, _secret, _passphrase ):
         """
         Note on RegEx:
@@ -70,10 +71,23 @@ class CoinbaseProClient( object ):
         
         return 0
     
-    def start_client( self ):
-        """ Public client is used to query data """
-        self.exchange_client = cbp.AuthenticatedClient( self._key,  self._secret, self._passphrase )
-        return self.exchange_client
+    def start_client( self ) -> cbp.AuthenticatedClient :
+        """ Client is used to query data """
+        self.client = cbp.AuthenticatedClient( self._key,  self._secret, self._passphrase )
+        return self.client
+    
+    def get_dataframe( self,
+                       ticker: str,
+                       start: Optional[str] = None,
+                       stop: Optional[str] = None,
+                       granularity: Optional[str] = None,
+                       ) -> pd.DataFrame:
+        """ Query historical data and return as a pandas dataframe """
+        self.dataframe = self.client.get_product_historic_rates( ticker,
+                                                                 start,
+                                                                 stop,
+                                                                 granularity )
+        return pd.DataFrame( self.dataframe )
     
     def main( self ):
         """Entry point for the application script"""
@@ -91,4 +105,7 @@ secret      = api_data[ 'secret'     ]                                  # ...
 passphrase  = api_data[ 'passphrase' ]                                  # ...
 
 cbp_client = CoinbaseProClient( key, secret, passphrase )
-cbp_client.exchange_client.get_product_24hr_stats( 'ETH-USD' )
+cbp_client.client.get_product_24hr_stats( 'ETH-USD' )
+
+df = cbp_client.get_dataframe( 'BTC-USD' )
+print( df )

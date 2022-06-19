@@ -78,7 +78,9 @@ setup(
                 'orjson==3.7.2',
                 'pandas==1.4.2',
                 'pandas-ta==0.3.14b0',
-                'python-telegram-bot==13.7',
+                'python-dotenv==0.20.0',
+                'python-telegram-bot==13.12',
+                #'python-telegram-bot==20.0a1',
                 'statsmodels==0.13.2'
                 ],
         )
