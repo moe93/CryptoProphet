@@ -13,30 +13,20 @@ AUTHOR                      :   Mohammad Odeh
 DATE                        :   Jun. 15th, 2022 Year of Our Lord
 LAST CONTRIBUTION DATE      :   Jun. 15th, 2022 Year of Our Lord
 """
-from dotenv import load_dotenv
-load_dotenv()
-
-import os
-token_ = os.environ.get('tg_token')
-user_id_ = os.environ.get('tg_user_id')
 
 from    typing                      import  Any, List, Union                  # Needed for type hinting
-from    re                          import  compile                     # Use regex for validation
 # import  orjson                                                          # Fast, efficient JSON parser
 
 import html
 import json
-import logging
 import traceback
 
-from    telegram                    import  Bot, BotCommand, Update
+from    telegram                    import  ReplyKeyboardRemove, Update
 from    telegram                    import  ParseMode
 from    telegram.ext                import  CallbackContext
 from    telegram.ext                import  Updater
 from    telegram.ext                import  Dispatcher
 from    telegram.ext                import  CommandHandler              # Handle any command sent by the user
-from    telegram.ext                import  MessageHandler              # Handles regular messages sent by the user
-from    telegram.ext                import  Filters                     # Filter that allows any text message
 from    telegram.bot                import  Bot, BotCommand             # Make commands visible in-app
 
 # Telegram type hinting imports
@@ -45,67 +35,45 @@ from    telegram.ext.utils.types    import  CCT                         # CCT: A
 from    telegram.ext.utils.types    import  CD                          # CD : Type of the chat data for a single user
 from    telegram.ext.utils.types    import  UD                          # UD : Type of the user data for a single user
 
-
+# from    TelegramBot_inApp           import  TelegramBotInApp
+from    TelegramBot_helper          import  TelegramBotHelper
+from    auxiliary.InterruptHandler  import  GracefulInterruptHandler as Grace
 
 class TelegramBot( object ):
     
-    # Add type hints for read_config() attributes
-    token       : str;   user_id     : str
-
-    # Add type hints for connect_bot() attributes
-    updater     : Union[ Updater[CCT, UD, CD, BD],
-                         Updater[Union[CallbackContext, Any], Any, Any, Any] ]
-    dispatcher  : Union[ Dispatcher[CCT, UD, CD, BD],
-                         Dispatcher[Union[CallbackContext, Any], Any, Any, Any] ]
-    
-    # Add type hints for bot commands
+    # Add type hints
+    token           : str;   user_id     : str;     bot_running = bool
+    updater         : Union[ Updater[CCT, UD, CD, BD],
+                             Updater[Union[CallbackContext, Any], Any, Any, Any] ]
+    dispatcher      : Union[ Dispatcher[CCT, UD, CD, BD],
+                             Dispatcher[Union[CallbackContext, Any], Any, Any, Any] ]
     commands_list   : List[BotCommand]
     commands_bot    : Bot
     
     def __init__( self, tg_token, tg_id ):
-        # Setup logger
-        logging.basicConfig(
-                format  = '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                level   = logging.WARNING)
-        self.logger = logging.getLogger(__name__)
-        
-        self.validate_config( tg_token, tg_id )                         # Validate login info
-        self.connect_bot()                                              # Connect to the bot
+        self.helper = TelegramBotHelper( tg_token, tg_id )
+        self.logger = self.helper.setup_logger( 'TelegramBot_main' )        # Setup logger
+        self.token  = self.helper.token                                     # Extract validated token
+        self.user_id= self.helper.user_id                                   # Extract validated user ID
+        # self.inApp  = TelegramBotInApp()
 
-    def validate_config( self, tg_token: str, tg_id: str ) -> None :
-        """
-        Validate telegram token and user_id
-
-        :param tg_token: Telegram bot token
-        :param tg_id: Telegram user/client ID
-        :return: None
-        """
-    
-        pattern = compile( r'^\d{1,10}:[A-z0-9-_]{35,35}$' )
-        if not pattern.match( tg_token ):
-            raise Exception( 'Telegram token is invalid' )
-        else:
-            self.token = tg_token
-    
-        pattern = compile(r'^-?\d{7,13}$')
-        if not pattern.match( tg_id ):
-            raise Exception( 'Telegram user_id is invalid' )
-        else:
-            self.user_id = tg_id
+        self.bot_running = False
+        self.connect_bot()                                                  # Connect to the bot
         
-    def connect_bot( self, start_: bool = False ) -> None :
+    def connect_bot( self ) -> None :
         """
         The Updater class continuously fetches new updates from telegram
         and passes them on to the Dispatcher class.
         
         If you create an Updater object, it will create a Dispatcher for
         you and link them together with a Queue.
-        :param start_: boolean flag. If True, bot is activated. [Default: False]
         :return: None
         """
         
         try:
-            self.updater    = Updater( token=self.token, use_context=True ) # Connect to bot
+            self.updater    = Updater( token            = self.token,       # Connect to bot
+                                       use_context      = True,             # ...
+                                       user_sig_handler = Grace().handler )
             self.dispatcher = self.updater.dispatcher                       # Start dispatcher
             
         except:                                                             # If it fails
@@ -113,10 +81,6 @@ class TelegramBot( object ):
         
         finally:
             self._add_bot_commands()                                        # Register commands to dispatcher
-            
-        if( start_ ):                                                       # If flag is set to True
-            self.start_bot()                                                #   Start the bot
-        else: pass
     
     def start_bot( self, blocking = True ) -> None:
         """
@@ -126,9 +90,12 @@ class TelegramBot( object ):
                          mode (i.e. blocks python console). [Default: True]
         :return: None
         """
-        self.updater.start_polling()                                         # Start pooling connection
+        if( self.bot_running is not True ):                                 # Check if bot is running or not
+            self.updater.start_polling()                                    #   If not, start pooling connection
+            self.bot_running = True                                         #   Set bot_running flag to True
+            
         if( blocking ):                                                     # If blocking flag is True
-            self.updater.idle()                                              #   Run the bot until Ctrl-C
+            self.updater.idle()                                             #   Run the bot until Ctrl-C
         else: pass
         
     def _add_bot_commands( self ) -> None :
@@ -150,7 +117,9 @@ class TelegramBot( object ):
 
     # This here is for logging errors
     def error_handler( self, update: object, context: CallbackContext ) -> None:
-        """Log the error and send a telegram message to notify the developer."""
+        """
+        Log the error and send a telegram message to notify the developer.
+        """
         # Log the error before we do anything else, so we can see it even if something breaks.
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
     
@@ -194,11 +163,11 @@ class TelegramBot( object ):
         '''
         update.message.reply_text( f'{txt}' )
     
-    def setcommands( self, update_obj: Update, context: CallbackContext ) -> None :
+    def setcommands( self, update: Update, context: CallbackContext ) -> None :
         """
         Sets commands to be visible within the app for easier access
 
-        :param update_obj:
+        :param update:
         :param context: CallbackContext:
         :return: None
         """
@@ -212,17 +181,23 @@ class TelegramBot( object ):
         self.commands_bot.set_my_commands( self.commands_list )
         print( "DONE!" )
         # context.bot.send_message( chat_id=self.user_id, text='Hello and welcome' )
+        self.helper.send_telegram_message(
+                update,
+                "<i>Bot Commands Created</i>",
+                ReplyKeyboardRemove(),
+                context=context,
+                )
         
-    def start( self, update_obj: Update, context: CallbackContext ) -> None :
+    def start( self, update: Update, context: CallbackContext ) -> None :
         """
         Sends a message when the command /start is issued.
 
-        :param update_obj:
+        :param update:
         :param context: CallbackContext:
         :return: None
         """
         txt = f"Hello, I am {self.updater.bot['first_name']}"
-        update_obj.message.reply_text( f'{txt}' )
+        update.message.reply_text( f'{txt}' )
     
     def placeholder( self, update: Update, context: CallbackContext ) -> None :
         """
@@ -255,8 +230,19 @@ class TelegramBot( object ):
 
 #%% ----------------- ___START___: Setup script and run -----------------
 
-# bot = TelegramBot( token_, user_id_ )                               # Start bot
-# bot.start_bot( False )
-# bot.setcommands( None, None )
+if __name__ == '__main__':
+    from dotenv     import  load_dotenv
+    load_dotenv()
+    
+    from os         import  environ
+    token_      =   environ.get('tg_token')
+    user_id_    =   environ.get('tg_user_id')
+
+    bot = TelegramBot( token_, user_id_ )                               # Start bot
+    bot.start_bot( blocking=False )                                     # Start bot with idling OFF (FALSE)
+    bot.setcommands( None, None )                                       # Register commands with Telegram
+    bot.updater.bot.send_message( text      = "Online and ready.",      # [INFO] ...
+                                  chat_id   = user_id_ )                # ...
+    bot.start_bot( blocking=True )                                      # Switch idling to ON (TRUE)
 
 #   ----------------- ___ END ___: Setup script and run -----------------

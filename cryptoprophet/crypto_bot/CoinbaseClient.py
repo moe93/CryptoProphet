@@ -14,12 +14,12 @@ DATE                        :   Jun. 13th, 2022 Year of Our Lord
 LAST CONTRIBUTION DATE      :   Jun. 14th, 2022 Year of Our Lord
 """
 
-import  coinbasepro                 as      cbp                         # Official API for Coinbase Pro
 import  pandas                      as      pd                          # Dataframes to facilitate analysis
 from    re                          import  compile                     # Use regex for validation
 from    os                          import  getcwd                      # Get current working directory
 from    os.path                     import  join                        # Create path that is agnostic to OS
 import  orjson                                                          # Fast, efficient JSON parser
+import  requests
 
 class CoinbaseProClient( object ):
     def __init__( self, _key, _secret, _passphrase ):

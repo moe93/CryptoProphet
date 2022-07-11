@@ -13,6 +13,7 @@ AUTHOR                      :   Mohammad Odeh
 DATE                        :   Jun. 15th, 2022 Year of Our Lord
 LAST CONTRIBUTION DATE      :   Jun. 15th, 2022 Year of Our Lord
 """
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -21,7 +22,7 @@ token_ = os.environ.get('tg_token')
 user_id_ = os.environ.get('tg_user_id')
 
 # Class to inherit from
-from    TelegramBot_main                    import  *
+# from    TelegramBot_main                    import  *
 
 import  json
 from    apscheduler.schedulers.background   import  BackgroundScheduler
@@ -29,13 +30,12 @@ from    telegram                            import  InlineKeyboardMarkup
 from    telegram                            import  InlineKeyboardButton
 
 CANCEL = ["200"]
-class TelegramBotInApp( TelegramBot ):
+class TelegramBotInApp( object ):
     """
     Handle communication from within the app.
     """
     
     def __init__(self, tg_token, tg_id) -> None:
-        super().__init__(tg_token, tg_id)
         self.scannerSchedule = BackgroundScheduler(timezone="UTC")
         self.dispatcher.add_handler( CommandHandler("showkeyboard"   , self.showkeyboard) )
         # self.commands_list.append( BotCommand( "get_request"          , "show help text + list of commands") )
@@ -69,10 +69,11 @@ class TelegramBotInApp( TelegramBot ):
 
 #%% ----------------- ___START___: Setup script and run -----------------
 
-bot = TelegramBot( token_, user_id_ )                               # Start bot
-bot.start_bot( False )
-bot.setcommands( None, None )
-bot.commands_list.append( BotCommand( "showkeyboard"          , "shows keyboard. Does nothing for now") )
-bot.commands_bot.set_my_commands(bot.commands_list)
+if __name__ == '__main__':
+    bot = TelegramBot( token_, user_id_ )                               # Start bot
+    bot.start_bot( False )
+    bot.setcommands( None, None )
+    bot.commands_list.append( BotCommand( "showkeyboard"          , "shows keyboard. Does nothing for now") )
+    bot.commands_bot.set_my_commands(bot.commands_list)
 
 #   ----------------- ___ END ___: Setup script and run -----------------

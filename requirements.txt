@@ -18,17 +18,17 @@ certifi==2022.6.15
     #   requests
 charset-normalizer==2.0.12
     # via requests
-coinbasepro==0.3.1
-    # via cryptoprophet (setup.py)
 cycler==0.11.0
+    # via matplotlib
+fonttools==4.34.4
     # via matplotlib
 idna==3.3
     # via requests
 kiwisolver==1.4.3
     # via matplotlib
-matplotlib==3.3.3
+matplotlib==3.5.2
     # via cryptoprophet (setup.py)
-numpy==1.22.4
+numpy==1.23.1
     # via
     #   cryptoprophet (setup.py)
     #   matplotlib
@@ -36,11 +36,13 @@ numpy==1.22.4
     #   patsy
     #   scipy
     #   statsmodels
-orjson==3.7.2
+orjson==3.7.7
     # via cryptoprophet (setup.py)
 packaging==21.3
-    # via statsmodels
-pandas==1.4.2
+    # via
+    #   matplotlib
+    #   statsmodels
+pandas==1.4.3
     # via
     #   cryptoprophet (setup.py)
     #   pandas-ta
@@ -61,7 +63,7 @@ python-dateutil==2.8.2
     #   pandas
 python-dotenv==0.20.0
     # via cryptoprophet (setup.py)
-python-telegram-bot==13.12
+python-telegram-bot==13.13
     # via cryptoprophet (setup.py)
 pytz==2022.1
     # via
@@ -70,8 +72,10 @@ pytz==2022.1
     #   python-telegram-bot
 pytz-deprecation-shim==0.1.0.post0
     # via tzlocal
-requests==2.28.0
-    # via coinbasepro
+readchar==3.0.5
+    # via cryptoprophet (setup.py)
+requests==2.28.1
+    # via cryptoprophet (setup.py)
 scipy==1.8.1
     # via statsmodels
 six==1.16.0
