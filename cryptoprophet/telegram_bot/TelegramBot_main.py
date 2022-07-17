@@ -11,23 +11,15 @@ KNOWN ISSUES:
 
 AUTHOR                      :   Mohammad Odeh
 DATE                        :   Jun. 15th, 2022 Year of Our Lord
-LAST CONTRIBUTION DATE      :   Jun. 15th, 2022 Year of Our Lord
+LAST CONTRIBUTION DATE      :   Jul. 16th, 2022 Year of Our Lord
 """
 
-from    typing                      import  Any, List, Union                  # Needed for type hinting
-# import  orjson                                                          # Fast, efficient JSON parser
+import  traceback, html
 
-import html
-import json
-import traceback
-
-from    telegram                    import  ReplyKeyboardRemove, Update
 from    telegram                    import  ParseMode
-from    telegram.ext                import  CallbackContext
-from    telegram.ext                import  Updater
+from    telegram.ext                import  Filters, MessageHandler
 from    telegram.ext                import  Dispatcher
 from    telegram.ext                import  CommandHandler              # Handle any command sent by the user
-from    telegram.bot                import  Bot, BotCommand             # Make commands visible in-app
 
 # Telegram type hinting imports
 from    telegram.ext.utils.types    import  BD                          # BD : Type of the bot data
@@ -35,14 +27,15 @@ from    telegram.ext.utils.types    import  CCT                         # CCT: A
 from    telegram.ext.utils.types    import  CD                          # CD : Type of the chat data for a single user
 from    telegram.ext.utils.types    import  UD                          # UD : Type of the user data for a single user
 
-# from    TelegramBot_inApp           import  TelegramBotInApp
-from    TelegramBot_helper          import  TelegramBotHelper
 from    auxiliary.InterruptHandler  import  GracefulInterruptHandler as Grace
 
-class TelegramBot( object ):
+# Class to inherit from
+from    TelegramBot_inApp           import  *
+
+class TelegramBot( TelegramBotInApp ):
     
     # Add type hints
-    token           : str;   user_id     : str;     bot_running = bool
+    bot_running = bool
     updater         : Union[ Updater[CCT, UD, CD, BD],
                              Updater[Union[CallbackContext, Any], Any, Any, Any] ]
     dispatcher      : Union[ Dispatcher[CCT, UD, CD, BD],
@@ -50,14 +43,11 @@ class TelegramBot( object ):
     commands_list   : List[BotCommand]
     commands_bot    : Bot
     
-    def __init__( self, tg_token, tg_id ):
-        self.helper = TelegramBotHelper( tg_token, tg_id )
-        self.logger = self.helper.setup_logger( 'TelegramBot_main' )        # Setup logger
-        self.token  = self.helper.token                                     # Extract validated token
-        self.user_id= self.helper.user_id                                   # Extract validated user ID
-        # self.inApp  = TelegramBotInApp()
-
-        self.bot_running = False
+    def __init__( self, tg_token, tg_user_id ):
+        super().__init__( tg_token, tg_user_id )                            # Initialize inherited class
+        
+        self.bot_running = False                                            # Bot is NOT running on start
+        self.logger = self.setup_logger( 'TelegramBot_main' )               # Setup logger
         self.connect_bot()                                                  # Connect to the bot
         
     def connect_bot( self ) -> None :
@@ -70,17 +60,15 @@ class TelegramBot( object ):
         :return: None
         """
         
-        try:
-            self.updater    = Updater( token            = self.token,       # Connect to bot
-                                       use_context      = True,             # ...
-                                       user_sig_handler = Grace().handler )
-            self.dispatcher = self.updater.dispatcher                       # Start dispatcher
+        try:                                                                # Catch error
+            self.updater    = Updater( token            = self.token,       #   Connect to bot
+                                       use_context      = True,             #   ...
+                                       user_sig_handler = Grace().handler ) #   ...
+            self.dispatcher = self.updater.dispatcher                       #   Start dispatcher
+            self._add_bot_commands()                                        #   Register commands to dispatcher
             
-        except:                                                             # If it fails
-            raise Exception( 'Failed to connect to bot' )                   #   Raise error
-        
-        finally:
-            self._add_bot_commands()                                        # Register commands to dispatcher
+        except:                                                             # If error occurs
+            raise Exception( 'Failed to connect to bot' )                   #   Catch and raise error
     
     def start_bot( self, blocking = True ) -> None:
         """
@@ -106,14 +94,16 @@ class TelegramBot( object ):
         """
         
         # Add the different commands
-        self.dispatcher.add_handler( CommandHandler("help"          , self.help)        )
-        self.dispatcher.add_handler( CommandHandler("setcommands"   , self.setcommands) )
-        self.dispatcher.add_handler( CommandHandler("start"         , self.start)       )
-        self.dispatcher.add_handler( CommandHandler("placeholder"   , self.placeholder) )
+        self.dispatcher.add_handler( CommandHandler("help"              , self.help)         )
+        self.dispatcher.add_handler( CommandHandler("set_commands"      , self.set_commands) )
+        self.dispatcher.add_handler( CommandHandler("show_keyboard"     , self.show_keyboard))
+        self.dispatcher.add_handler( CommandHandler("start"             , self.start)        )
+        self.dispatcher.add_handler( CommandHandler("placeholder"       , self.placeholder)  )
+        
         # ... and the error handler
         self.dispatcher.add_error_handler( self.error_handler )
         # Unknown commands are echoed back at user
-        # self.dispatcher.add_handler( MessageHandler(Filters.text    , self.text)        )
+        self.dispatcher.add_handler( MessageHandler(Filters.text    , self.text)        )
 
     # This here is for logging errors
     def error_handler( self, update: object, context: CallbackContext ) -> None:
@@ -130,10 +120,11 @@ class TelegramBot( object ):
     
         # Build the message with some markup and additional information about what happened.
         # You might need to add some logic to deal with messages longer than the 4096 character limit.
-        update_str = update.to_dict() if isinstance(update, Update) else str(update)
+        update_str  = update.to_dict() if isinstance(update, Update) else str(update)
+        update_html = html.escape(orjson.dumps(update_str, option=orjson.OPT_INDENT_2).decode('utf-8'))
         message = (
                 f'An exception was raised while handling an update\n'
-                f'<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}'
+                f'<pre>update = {update_html}'
                 '</pre>\n\n'
                 f'<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n'
                 f'<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n'
@@ -142,90 +133,6 @@ class TelegramBot( object ):
     
         # Finally, send the message
         context.bot.send_message(chat_id=self.user_id, text=message, parse_mode=ParseMode.HTML)
-        
-    # Here is where we start defining bot commands
-    def help( self, update: Update, context: CallbackContext ) -> None :
-        """
-        Sends a message when the command /help is issued.
-        
-        :param update:
-        :param context: CallbackContext:
-        :return: None
-        """
-        
-        txt = \
-        '''
-        Available Commands :-
-        /help           - shows this text message
-        /setcommands    - sets commands in the Telegram GUI
-        /start          - for now only greets user
-        /placeholder    - placeholder function
-        '''
-        update.message.reply_text( f'{txt}' )
-    
-    def setcommands( self, update: Update, context: CallbackContext ) -> None :
-        """
-        Sets commands to be visible within the app for easier access
-
-        :param update:
-        :param context: CallbackContext:
-        :return: None
-        """
-        self.commands_list = [ BotCommand( "help"           , "show help text + list of commands"),
-                               BotCommand( "setcommands"    , "sets commands in the Telegram GUI"),
-                               BotCommand( "start"          , "for now only greets user"),
-                               BotCommand( "placeholder"    , "placeholder function")
-                               ]
-        print( '[INFO] Setting commands in the Telegram GUI...', end='' )
-        self.commands_bot = Bot( self.token )
-        self.commands_bot.set_my_commands( self.commands_list )
-        print( "DONE!" )
-        # context.bot.send_message( chat_id=self.user_id, text='Hello and welcome' )
-        self.helper.send_telegram_message(
-                update,
-                "<i>Bot Commands Created</i>",
-                ReplyKeyboardRemove(),
-                context=context,
-                )
-        
-    def start( self, update: Update, context: CallbackContext ) -> None :
-        """
-        Sends a message when the command /start is issued.
-
-        :param update:
-        :param context: CallbackContext:
-        :return: None
-        """
-        txt = f"Hello, I am {self.updater.bot['first_name']}"
-        update.message.reply_text( f'{txt}' )
-    
-    def placeholder( self, update: Update, context: CallbackContext ) -> None :
-        """
-        Placeholder function
-
-        :param update:
-        :param context: CallbackContext:
-        :return: None
-        """
-        txt = 'I am a placeholder function'
-        update.message.reply_text( f'{txt}' )
-        
-    # def text( self, update_obj: Update, context: MessageHandler ) -> Any :
-    def text( self, update_obj: Update, context: Any ) -> Any :
-        """
-        Function to handle normal text
-        
-        :param update_obj:
-        :param context: MessageHandler:
-        :return: None
-        """
-        
-        text_received = update_obj.message.text
-        txt = \
-        f'''
-        "{text_received}" is not a known command. \nPlease see /help for a list of all available commands
-        '''
-        update_obj.message.reply_text( f'{txt}' )
 
 
 #%% ----------------- ___START___: Setup script and run -----------------
@@ -240,7 +147,7 @@ if __name__ == '__main__':
 
     bot = TelegramBot( token_, user_id_ )                               # Start bot
     bot.start_bot( blocking=False )                                     # Start bot with idling OFF (FALSE)
-    bot.setcommands( None, None )                                       # Register commands with Telegram
+    bot.set_commands( None, None )                                      # Register commands with Telegram
     bot.updater.bot.send_message( text      = "Online and ready.",      # [INFO] ...
                                   chat_id   = user_id_ )                # ...
     bot.start_bot( blocking=True )                                      # Switch idling to ON (TRUE)

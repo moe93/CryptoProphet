@@ -3,11 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
-env_ta/
-
 .DS_Store
 
 # Distribution / packaging
@@ -51,13 +46,6 @@ coverage.xml
 *.mo
 *.pot
 
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Sphinx documentation
-docs/_build/
-
 # pyenv
 .python-version
 
@@ -69,17 +57,14 @@ docs/_build/
 
 # virtualenv
 .venv
-venv/
+venv*/
 ENV/
 env/**
 
 # mkdocs documentation
 /site
 
-# mypy
-.mypy_cache/
-
-# twopirllc stuff
+# Randoms
 notes.md
 setup.cfg
 doc.py

@@ -20,13 +20,13 @@ class GracefulInterruptHandlerContextManager( object ):
             signal.signal( sig, self.handler )
         return self
 
-    def handler( self, signum, frame ):
-        self.release()
-        self.interrupted = True
-        msg = "Ctrl-c was pressed. Do you really want to exit? y/n "
-        print( msg, end="", flush=True )
-        res = readchar.readchar()
-        if( res == 'y' ):
+    def handler( self, signum: Union[int, signal.Signals], frame ):
+        msg = f'[?] Signal handler called with signal {signum}.'
+        msg = f'{msg} Do you really want to exit? (y/n)'
+        print( msg, end="\n", flush=True )
+        response = readchar.readchar()
+        
+        if( response == 'y' ):
             print("")
             self.release()
             self.interrupted = True
@@ -63,8 +63,8 @@ class GracefulInterruptHandler( object ):
             signal.signal( sig, self.handler )
     
     def handler( self, signum: Union[int, signal.Signals], frame ):
-        msg = f'Signal handler called with signal {signum}.\n'
-        msg = f'{msg} Do you really want to exit? y/n'
+        msg = f'[?] Signal handler called with signal {signum}.'
+        msg = f'{msg} Do you really want to exit? (y/n)'
         print( msg, end="\n", flush=True )
         response = readchar.readchar()
         
@@ -95,19 +95,19 @@ class GracefulInterruptHandler( object ):
 #%% ----------------- ___START___: Setup script and run -----------------
 
 if __name__ == '__main__':
-    import time
-    # with GracefulInterruptHandler() as h:
+    from time import sleep
+    
+    # # Test 1
+    # with GracefulInterruptHandlerContextManager() as h:
     #     for i in range(1000):
     #         print( "..." )
-    #         time.sleep(1)
+    #         sleep(1)
     #         if h.interrupted:
     #             print( "interrupted!" )
-    #             time.sleep(2)
+    #             sleep(2)
     #             break
+    
+    # Test 2
     sig_handler = GracefulInterruptHandler()
-    # signals=(signal.SIGINT, )
-    # for sig in signals:
-    #     sigy = signal.signal( sig, GracefulInterruptHandler.handler )
-    #     print(sig, end=', '); print( sigy )
-    time.sleep( 10 )
+    sleep( 10 )
 #   ----------------- ___ END ___: Setup script and run -----------------
