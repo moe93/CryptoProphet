@@ -1,13 +1,16 @@
 #@formatter:off
 """
-Telegram helper class and functions
+Telegram helper class and functions.
+Currently, this class creates the loggers, validates the telegram token
+and user ID, and facilitates sending messages from the bot to the user.
+
+*** NOTE: This class is to be inherited by TelegramBot_inApp.py
 
 VERSION: 0.0.1
     - ADDED     : Pre-planning stage
 
 KNOWN ISSUES:
     - Non encountered
-
 
 AUTHOR                      :   Mohammad Odeh
 DATE                        :   Jun. 15th, 2022 Year of Our Lord

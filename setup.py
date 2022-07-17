@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-CryptoProphet is a python crypto trading bot with forecasting abilities to determine buy and sell orders.
+CryptoProphet is a python crypto trading bot with forecasting
+abilities to determine buy and sell orders.
 
 A setuptools based setup module.
 See:

@@ -1,6 +1,11 @@
 #@formatter:off
 """
-Create a Telegram communication bot
+Telegram communication class and functions.
+This class manages the creation of the in-app interface and commands
+for user interaction.
+
+*** NOTE: This class inherits TelegramBot_helper.py
+*** NOTE: This class is to be inherited by TelegramBot_main.py
 
 VERSION: 0.0.1
     - ADDED     : Pre-planning stage

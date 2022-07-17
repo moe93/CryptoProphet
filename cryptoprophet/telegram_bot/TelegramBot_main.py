@@ -1,6 +1,11 @@
 #@formatter:off
 """
-Create a Telegram communication bot
+Telegram bot.
+This class is the front-end of the bot. All other classes and interactions
+tie-in and pour into this main class.
+
+
+**NOTE: This class inherits TelegramBot_inApp.py**
 
 VERSION: 0.0.1
     - ADDED     : Pre-planning stage
@@ -14,11 +19,21 @@ DATE                        :   Jun. 15th, 2022 Year of Our Lord
 LAST CONTRIBUTION DATE      :   Jul. 16th, 2022 Year of Our Lord
 """
 
-import  traceback, html
+# Needed for error logger
+import  traceback                                                       # Manipulate traceback errors
+import  html                                                            # Manipulate HTML data
 
-from    telegram                    import  ParseMode
-from    telegram.ext                import  Filters, MessageHandler
-from    telegram.ext                import  Dispatcher
+# Class to inherit from
+from    TelegramBot_inApp           import  *                           # Contains in-app setup and handling functions
+
+# Graceful interrupt handler class
+from    auxiliary.InterruptHandler  import  GracefulInterruptHandler as Grace
+
+# Telegram bot classes and helpers
+from    telegram                    import  ParseMode                   # Message parse modes (needed for HTML parsing)
+from    telegram.ext                import  MessageHandler              # Handler class to handle messages
+from    telegram.ext                import  Filters                     # Predefined filters to use with MessageHandler
+from    telegram.ext                import  Dispatcher                  # Dispatch updates to bot
 from    telegram.ext                import  CommandHandler              # Handle any command sent by the user
 
 # Telegram type hinting imports
@@ -26,11 +41,6 @@ from    telegram.ext.utils.types    import  BD                          # BD : T
 from    telegram.ext.utils.types    import  CCT                         # CCT: An instance of :class:`telegram.ext.CallbackContext`
 from    telegram.ext.utils.types    import  CD                          # CD : Type of the chat data for a single user
 from    telegram.ext.utils.types    import  UD                          # UD : Type of the user data for a single user
-
-from    auxiliary.InterruptHandler  import  GracefulInterruptHandler as Grace
-
-# Class to inherit from
-from    TelegramBot_inApp           import  *
 
 class TelegramBot( TelegramBotInApp ):
     
@@ -88,7 +98,10 @@ class TelegramBot( TelegramBotInApp ):
         
     def _add_bot_commands( self ) -> None :
         """
-        Desired bot commands are added here.
+        Bot commands are added here.
+        
+        The full list of available command functions can be found
+        in the TelegramBot_inApp.py file.
         
         :return: None
         """
@@ -138,13 +151,20 @@ class TelegramBot( TelegramBotInApp ):
 #%% ----------------- ___START___: Setup script and run -----------------
 
 if __name__ == '__main__':
-    from dotenv     import  load_dotenv
-    load_dotenv()
-    
-    from os         import  environ
-    token_      =   environ.get('tg_token')
-    user_id_    =   environ.get('tg_user_id')
+    # from dotenv     import  load_dotenv                                 # Read key-value pairs from a .env file
+    # load_dotenv()                                                       # Load environment variables from .env
+    #
+    # from os         import  environ
+    # token_      =   environ.get('tg_token')
+    # user_id_    =   environ.get('tg_user_id')
 
+    from dotenv     import  dotenv_values                               # Read key-value pairs from a .env file without modifying the environment
+    from dotenv     import  find_dotenv                                 # Search for the .env within the main directory and subdirectories
+    env_dir     = find_dotenv()                                         # Store absolute path to .env file
+    token_      = dotenv_values( env_dir )['tg_token']                  # Read token
+    bot_id_     = dotenv_values( env_dir )['tg_bot_id']                 # Read bot ID
+    user_id_    = dotenv_values( env_dir )['tg_user_id']                # Read user ID
+    
     bot = TelegramBot( token_, user_id_ )                               # Start bot
     bot.start_bot( blocking=False )                                     # Start bot with idling OFF (FALSE)
     bot.set_commands( None, None )                                      # Register commands with Telegram
