@@ -36,7 +36,7 @@ numpy==1.23.1
     #   patsy
     #   scipy
     #   statsmodels
-orjson==3.7.7
+orjson==3.7.11
     # via cryptoprophet (setup.py)
 packaging==21.3
     # via
@@ -72,7 +72,7 @@ pytz==2022.1
     #   python-telegram-bot
 pytz-deprecation-shim==0.1.0.post0
     # via tzlocal
-readchar==3.0.5
+readchar==3.1.0
     # via cryptoprophet (setup.py)
 requests==2.28.1
     # via cryptoprophet (setup.py)

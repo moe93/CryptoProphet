@@ -75,15 +75,15 @@ class TelegramBotHelper( object ):
         :return: None
         """
     
-        pattern = compile( r'^\d{1,10}:[A-z0-9_]{35}$' )                # Telegram token starts with 10digits then a (:)
+        pattern = compile( r'^\d{1,10}:[A-z0-9_]{35}$' )                    # Telegram token starts with 10digits then a (:)
         if not pattern.match( tg_token ):                                   # If pattern does NOT match
-            raise Exception( 'Telegram token is invalid' )                  #   Raise error
+            raise ValueError( 'Telegram token is invalid' )                 #   Raise error
         else:                                                               # Else
             self.token = tg_token                                           #   Store Telegram token
     
         pattern = compile(r'^-?\d{7,13}$')                                  # User ID consists of 10 digits
         if not pattern.match( tg_id ):                                      # If pattern does NOT match
-            raise Exception( 'Telegram user_id is invalid' )                #   Raise error
+            raise ValueError( 'Telegram user_id is invalid' )               #   Raise error
         else:                                                               # Else
             self.user_id = tg_id                                            #   Store Telegram user ID
             
