@@ -24,6 +24,7 @@ import  requests                                                            # HT
 import  hmac                                                                # Keyed-Hashing for Message Authentication
 import  hashlib                                                             # Secure hash and message digest algorithms
 import  orjson                                                              # Fast, efficient JSON parser
+from    CoinbaseAuth                import  CoinbaseAuthClient
 
 
 class CoinbaseClient( AuthBase ):
@@ -31,63 +32,60 @@ class CoinbaseClient( AuthBase ):
     # Add type hints
     _cb_key         : str = None
     _cb_secret      : str = None
-    api_url         : str = 'https://api.coinbase.com/v2/'
+    API_URL         : str = 'https://api.coinbase.com/v2/'
     
-    def __init__( self, key, secret ):
-        self.str = "Call Crypto Bot main application code here"
-        self.validate_api( key, secret )                                    # Validate API entries
-
-    def __call__( self, request ):
-        timestamp   = str( int(time()) )                                    # Get current time as string
-        
-        message     = timestamp + request.method + request.path_url + (request.body or '')
-        b_message   = message.encode( 'UTF-8' )                             # Encode message as bytes
-        b_secret    = (self._cb_secret).encode( 'UTF-8' )                   # Encode secret as bytes
-        signature   = hmac.new( b_secret, b_message, hashlib.sha256 ).hexdigest()
-    
-        request.headers.update( { 'CB-ACCESS-SIGN'      : signature     ,
-                                  'CB-ACCESS-TIMESTAMP' : timestamp     ,
-                                  'CB-ACCESS-KEY'       : self._cb_key  } )
-        return request
-    
-    def validate_api( self, _key: str, _secret: str ) -> int:
-        """
-        Validate Coinbase API information.
-        
-        Note on RegEx:
-            - The leading ^ and the trailing $ are known as position anchors, which match the start
-            and end positions of the line, respectively. As the result, the entire input string
-            shall be matched fully, instead of a portion of the input string (substring).
+    def __init__( self, key: str, secret: str, url: str = None ) -> None:
+        if url is not None:                                                 # Override API URL if provided
+            self.URL = url                                                  #   ...
+        else:                                                               # If not
+            self.URL = self.API_URL                                         #   Use default API URL
             
-            - {m}   : The preceding item is matched exactly m times
-            - {m,n} : The preceding item is matched at least m times, but not more than n times.
-            -   \   : Backslash is an escape character (i.e. \[ matches "[")
-            -   +   : Plus sign indicates one or more occurrences of the preceding element.
-                      For example, ab+c matches "abc", "abbc", "abbbc", and so on, but not "ac".
-                      
-        :param _key:
-        :param _secret:
+        self.auth_client = CoinbaseAuthClient( key, secret )            # Start authenticated client
+        # self.auth_session = self._start_session()                       # Start authenticated session
+        
+    def _start_session( self ) -> requests.Session:
+        """
+        Create a requests module session to improve performance by persisting
+        cookies across all requests made within the session instance
+        
+        :return: Authenticated session
+        """
+        session = requests.session()
+        session.auth = self.auth_client
+        session.headers.update({'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'User-Agent': 'coinbase/python/2.0'})
+        return session
+        
+    def _get( self, url_path: str ) -> requests.Response:
+        """
+        Perform a GET request.
+        
         :return:
         """
-        
-        # Key
-        pattern = compile( r'^[A-z0-9]{16}$' )                              # Validates API key
-        if not pattern.match( _key ):                                       # If NOT valid
-            raise ValueError( "Coinbase API key is invalid" )               #   Raise error
-        else:                                                               # Else, if it is correct
-            self._cb_key = _key                                             #   Store API key
-            
-        # Secret
-        pattern = compile( r'^[A-z0-9]{32}$' )                               # Validates API secret
-        if not pattern.match( _secret ):                                    # If NOT valid
-            raise ValueError( "Coinbase API secret is invalid" )            #   Raise error
-        else:                                                               # Else, if it is correct
-            self._cb_secret = _secret                                       #   Store API secret
-        
-        return 0
+        get = requests.get( self.URL + url_path, auth = self.auth_client )
+        print( get.url )
+        return get
     
-    
+    def get_price( self, currency_pair: str ) -> requests.Response:
+        """
+        https://api.coinbase.com/v2/prices/{currency_pair}/spot
+        
+        :param currency_pair: Pair such as "BTC-USD"
+        :return:
+        """
+        return self._get( f'prices/{currency_pair}/spot' )              # Get currency pair price
 
+    def get_fees( self ) -> requests.Response:
+        """
+        https://api.exchange.coinbase.com/fees
+
+        :return:
+        """
+        get = requests.get( 'https://api.exchange.coinbase.com/fees', auth = self.auth_client )
+        return get              # Get currency pair price
+    
+    
 #%% ----------------- ___START___: Setup script and run -----------------
 
 if __name__ == '__main__':
@@ -98,8 +96,12 @@ if __name__ == '__main__':
     cb_secret       = dotenv_values( env_dir )['cb_secret']             # Read secret
     
     cb_client = CoinbaseClient( cb_key, cb_secret )                     # Start client
-    r = requests.get( cb_client.api_url + 'user', auth = cb_client )    # Get current user
-    print( r.json() )
-    print( orjson.loads( r.content ) )
-
+    # req = requests.get( cb_client.auth_client.API_URL + 'user', auth = cb_client.auth_client )    # Get current user
+    # # print( r.json() )
+    # print( orjson.loads( req.content ) )
+    # r_currencies = requests.get( cb_client.auth_client.API_URL + 'currencies', auth = cb_client.auth_client )    # Get current user
+    # print( r.json() )
+    # print( orjson.loads( r_currencies.content ) )
+    req = cb_client.get_price( 'BTC-USD' )
+    req_fees = cb_client.get_fees()
 #   ----------------- ___ END ___: Setup script and run -----------------

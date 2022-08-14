@@ -55,14 +55,14 @@ coverage.xml
 # dotenv
 *.env
 
+# Backups
+*.BAK
+
 # virtualenv
 .venv
 venv*/
 ENV/
 env/**
-
-# mkdocs documentation
-/site
 
 # Randoms
 notes.md

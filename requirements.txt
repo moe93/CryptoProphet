@@ -93,6 +93,8 @@ tzlocal==4.2
     # via apscheduler
 urllib3==1.26.9
     # via requests
+websockets==10.3.0
+    # via cryptoprophet (setup.py)
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

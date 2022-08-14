@@ -83,6 +83,7 @@ setup(
                 # 'python-telegram-bot==20.0a1',
                 'readchar==3.1.0',
                 'requests==2.28.1',
-                'statsmodels==0.13.2'
+                'statsmodels==0.13.2',
+                'websockets==10.3.0'
                 ],
         )
